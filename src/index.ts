@@ -144,28 +144,38 @@ class Retagged implements RetaggedBuilder {
 
   async Execute(Content: String): Promise<any> {
     let match = Content.match(/(?<=(^|[^\\]){{)(.*?)(?=}})/gm);
+    let ReturningValue = Content;
     let Modified = [];
     if (match) {
       for (let m of match) {
         let m2 = m.match(/(?:[^|>])(\w+\.\w+)[^\\|>]*/gm);
+        let Result;
         if (m2) {
           for (let func of m2) {
             // @ts-ignore
             let completeFunc = func.match(/(?:[^|>])(\w+\.\w+)(?=[^\\|> ]*)/gm)[0].split('.');
+            let params = func.match(
+              /(([+-]?(\d*\.)?\d+)|(?<=')[^']*(?=')|((?<=[ ,])\w+\.\w+))/gm
+            );
             let Cat = this.GetCategory(completeFunc[0]);
             if(Cat) {
               if(Cat.GetTag(completeFunc[1])) {
-                let exec = Cat.ExecuteTag(completeFunc[1]);
+                let exec = params ? await Cat.ExecuteTag(completeFunc[1], params) : await Cat.ExecuteTag(completeFunc[1]);
                 if(exec) {
                   Modified.push(exec);
+                  Result = exec;
+                } else {
+                  Result = m;
                 }
               }
             }
           }
         }
+        Modified = await Promise.all(Modified);
+        if(Result) ReturningValue = ReturningValue.replace(`{{${m}}}`, Result);
       }
-      Modified = await Promise.all(Modified);
-      return Modified;
+
+      return ReturningValue;
     } else console.error(`No Tags found.`);
     throw false;
   }
