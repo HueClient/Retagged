@@ -52,4 +52,20 @@ rTag.Execute(StringMessage)
   })
 ```
 
+#### *Working with parameters*
+```javascript
+rTag.CreateCategory('Math', 'Testing category')
+  .CreateTag('max', (param1, param2) => {
+    return Math.max(param1, param2);
+  })
+
+const StringMessage = `Higher number from 16 and 69 is {{Math.max 16,69}}.`;
+rTag.Execute(StringMessage)
+  .then((result) => {
+    console.log(result);
+    // Expected result:
+    // Higher number from 16,69 is 69.
+  })
+```
+
 ****
